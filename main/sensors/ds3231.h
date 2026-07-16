@@ -1,3 +1,5 @@
+/* DS3231 实时时钟驱动接口。 */
+
 #pragma once
 
 #include "esp_err.h"

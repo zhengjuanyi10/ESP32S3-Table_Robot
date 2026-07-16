@@ -1,3 +1,5 @@
+/* DS3231 实时时钟驱动。 */
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
