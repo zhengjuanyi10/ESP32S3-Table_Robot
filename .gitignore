@@ -27,3 +27,7 @@ main/servo/*
 
 main/display/*
 !main/display/.gitkeep
+
+# Keep the examples directory without uploading local examples
+examples/*
+!examples/.gitkeep

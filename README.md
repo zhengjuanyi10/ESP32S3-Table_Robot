@@ -40,7 +40,7 @@ idf.py -p COMx flash monitor
     ├── main.c               # 应用入口
     ├── actions/             # 动作模块（预留）
     ├── button/              # 按键模块（预留）
-    ├── display/             # OLED 显示与表情资源工具
+    ├── display/             # 显示模块（预留）
     ├── sensors/             # 传感器模块
     └── servo/               # 舵机模块（预留）
 ```
@@ -56,7 +56,7 @@ idf.py -p COMx flash monitor
 | 温湿度监测 | `main/sensors/sht30.*` | 温度与湿度数据读取 | 已提交 |
 | 动作控制 | `main/actions/` | 组合动作与动作编排 | 预留 |
 | 按键输入 | `main/button/` | 按键检测与输入事件处理 | 预留 |
-| 显示输出 | `main/display/` | OLED 屏幕显示与表情资源生成 | 已提交 |
+| 显示输出 | `main/display/` | 屏幕初始化与界面显示 | 预留 |
 | 舵机控制 | `main/servo/` | 舵机通信与运动控制 | 预留 |
 | 项目配置 | `sdkconfig.defaults`、`main/Kconfig.projbuild` | 默认参数与可配置选项 | 已提交 |
 
@@ -65,8 +65,8 @@ idf.py -p COMx flash monitor
 - `main` 分支保存稳定代码。
 - 新功能在独立分支开发，并通过 Pull Request 合并。
 - 不提交 `build/`、`sdkconfig`、`.vscode/` 等本地生成或个人配置文件。
-- `actions`、`button` 和 `servo` 目录当前仅保留目录结构，代码将在相应模块整理完成后提交。
+- `actions`、`button`、`display` 和 `servo` 目录当前仅保留目录结构，代码将在相应模块整理完成后提交。
 
 ## 当前状态
 
-仓库目前包含基础工程配置、传感器模块和 OLED 显示模块。部分预留模块尚未提交，实现补充完成前可能需要同步调整 `main/CMakeLists.txt` 才能完整编译。
+仓库目前包含基础工程配置和传感器模块。部分预留模块尚未提交，实现补充完成前可能需要同步调整 `main/CMakeLists.txt` 才能完整编译。
