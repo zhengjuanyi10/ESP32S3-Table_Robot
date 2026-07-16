@@ -1,0 +1,163 @@
+menu "Table Robot"
+
+config TABLE_ROBOT_SERVO_ENABLE
+    bool "Enable ZP bus-servo broadcast control"
+    default y
+    help
+        Enable the one-wire UART interface for Zhongling ZP bus servos.
+        Centering can be initiated with the BOOT button or automatically at
+        application startup, depending on the options below.
+
+if TABLE_ROBOT_SERVO_ENABLE
+
+config TABLE_ROBOT_SERVO_BAUD_RATE
+    int "ZP bus-servo UART baud rate"
+    range 9600 1000000
+    default 115200
+    help
+        UART baud rate used between ESP32-S3 and ZLink. The debug console can
+        temporarily switch between 115200 and 9600 with the baudtest command.
+
+config TABLE_ROBOT_SERVO_TX_GPIO
+    int "ZP bus-servo UART TX GPIO"
+    range 0 48
+    default 17
+    help
+        Connect this GPIO to the S (signal) line of the ZP servo bus.
+        GPIO 17 matches the vendor's ESP32 example.
+
+config TABLE_ROBOT_SERVO_RX_GPIO
+    int "ZP bus-servo UART RX GPIO"
+    range 0 48
+    default 16
+    help
+        Connect this GPIO to the TX pin of Zhongling's one-wire-to-two-wire
+        UART adapter when angle or status readback is needed. GPIO 16 matches
+        the vendor's ESP32 example.
+
+config TABLE_ROBOT_SERVO_BUTTON_GPIO
+    int "Servo-center button GPIO"
+    range 0 48
+    default 0
+    help
+        GPIO 0 is the BOOT button on ESP32-S3-DevKitC-1. Hold it after boot
+        to intentionally send the broadcast center command.
+
+config TABLE_ROBOT_SERVO_CENTER_PWM
+    int "ZP servo center position (PWM)"
+    range 500 2500
+    default 1500
+    help
+        The ZP protocol center position is normally 1500. Confirm that this
+        position is mechanically safe for the assembled robot before use.
+
+config TABLE_ROBOT_SERVO_CENTER_TIME_MS
+    int "Time for all servos to reach center (ms)"
+    range 100 9999
+    default 5000
+    help
+        A longer move is gentler on the mechanism. The ZP protocol accepts
+        values from 0 to 9999 milliseconds.
+
+config TABLE_ROBOT_SERVO_CENTER_HOLD_MS
+    int "Required button hold time (ms)"
+    range 500 10000
+    default 1500
+    help
+        Requiring a long press prevents a normal reboot from moving the robot.
+
+config TABLE_ROBOT_SERVO_AUTO_CENTER_ON_BOOT
+    bool "Center all ZP servos automatically after boot"
+    default n
+    help
+        Send the broadcast center command every time the application starts.
+        Disable this option if the robot must remain still after a reset.
+
+if TABLE_ROBOT_SERVO_AUTO_CENTER_ON_BOOT
+
+config TABLE_ROBOT_SERVO_AUTO_CENTER_DELAY_MS
+    int "Delay before automatic center (ms)"
+    range 0 10000
+    default 2000
+    help
+        Give the power supply and servo bus time to stabilize before the
+        broadcast center command is sent.
+
+endif
+
+config TABLE_ROBOT_SERVO_VERIFY_CENTER_AFTER_MOVE
+    bool "Verify servo positions after a broadcast center command"
+    default n
+    help
+        Read each configured servo after it has had time to reach the center.
+        Requires the RX path from the ZP UART adapter to GPIO16.
+
+if TABLE_ROBOT_SERVO_VERIFY_CENTER_AFTER_MOVE
+
+config TABLE_ROBOT_SERVO_VERIFY_TOLERANCE_PWM
+    int "Allowed center error (PWM units)"
+    range 0 500
+    default 30
+    help
+        Center is considered successful when the readback is within this
+        distance from the configured center PWM value.
+
+endif
+
+endif
+
+menu "ILI9488 display"
+
+config TABLE_ROBOT_DISPLAY_SPI_CLOCK_HZ
+    int "ILI9488 SPI clock (Hz)"
+    range 1000000 40000000
+    default 20000000
+    help
+        Start at 20 MHz for jumper-wire stability. This can be increased after
+        the final PCB or short wiring is verified.
+
+config TABLE_ROBOT_DISPLAY_SCLK_GPIO
+    int "ILI9488 SCLK GPIO"
+    range 0 48
+    default 39
+
+config TABLE_ROBOT_DISPLAY_MOSI_GPIO
+    int "ILI9488 MOSI GPIO"
+    range 0 48
+    default 40
+
+config TABLE_ROBOT_DISPLAY_CS_GPIO
+    int "ILI9488 CS GPIO"
+    range 0 48
+    default 42
+
+config TABLE_ROBOT_DISPLAY_DC_GPIO
+    int "ILI9488 DC GPIO"
+    range 0 48
+    default 47
+
+config TABLE_ROBOT_DISPLAY_RESET_GPIO
+    int "ILI9488 RESET GPIO"
+    range 0 48
+    default 41
+    help
+        Temporary wiring uses GPIO41. Change this to GPIO48 when restoring the
+        final wiring table; display API calls do not need to change.
+
+config TABLE_ROBOT_DISPLAY_BACKLIGHT_GPIO
+    int "ILI9488 backlight GPIO"
+    range 0 48
+    default 38
+
+config TABLE_ROBOT_TOUCH_RESET_GPIO
+    int "Capacitive-touch RESET GPIO"
+    range 0 48
+    default 2
+    help
+        Temporary wiring uses GPIO2. Change this to GPIO21 when restoring the
+        final wiring table. The touch protocol is added separately after its
+        controller model is confirmed.
+
+endmenu
+
+endmenu

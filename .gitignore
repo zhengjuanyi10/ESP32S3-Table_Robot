@@ -1,0 +1,29 @@
+# ESP-IDF generated files
+build/
+managed_components/
+sdkconfig
+sdkconfig.old
+
+# Editor and OS files
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Local development configuration
+.vscode/
+idf.cmd
+
+# Temporarily keep directories without uploading their source files
+main/actions/*
+!main/actions/.gitkeep
+
+main/button/*
+!main/button/.gitkeep
+
+main/servo/*
+!main/servo/.gitkeep
+
+main/display/*
+!main/display/.gitkeep
