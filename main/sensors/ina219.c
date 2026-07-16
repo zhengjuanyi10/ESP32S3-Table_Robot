@@ -1,4 +1,7 @@
-/* INA219 电压、电流和功率监测驱动。 */
+/*
+ * 功能：读取 INA219 母线电压、电流和功率。
+ * 配置：共享 I2C0，100 kHz，地址 0x40；按常见 R100(0.1 欧)模块校准。
+ */
 
 #include <stdint.h>
 
@@ -34,7 +37,8 @@ static esp_err_t read_register(uint8_t reg, uint16_t *value)
 {
     /* 先写寄存器地址，再重复起始读取两个字节。 */
     uint8_t data[2];
-    esp_err_t err = i2c_master_transmit_receive(s_ina219, &reg, 1, data, sizeof(data), 100);
+    esp_err_t err = i2c_master_transmit_receive(
+        s_ina219, &reg, 1, data, sizeof(data), 100);
     if (err == ESP_OK) {
         *value = ((uint16_t)data[0] << 8) | data[1];
     }
@@ -64,12 +68,15 @@ esp_err_t ina219_init(void)
 
     /* 32 V / 320 mV 量程、连续测量；随后写入 R100 的校准值。 */
     err = write_register(INA219_REG_CONFIG, 0x399F);
-    return err == ESP_OK ? write_register(INA219_REG_CALIBRATION, INA219_CALIBRATION) : err;
+    return err == ESP_OK
+               ? write_register(INA219_REG_CALIBRATION,
+                                INA219_CALIBRATION)
+               : err;
 }
 
 esp_err_t ina219_get_measurement(ina219_measurement_t *measurement)
 {
-    /* 依次读取电压、电流、功率，任一步失败就舍弃本次结果。 */
+    /* 依次读取电压、电流、功率；任一寄存器读取失败则不更新结果。 */
     if (measurement == NULL || s_ina219 == NULL) {
         return ESP_ERR_INVALID_STATE;
     }
@@ -88,6 +95,7 @@ esp_err_t ina219_get_measurement(ina219_measurement_t *measurement)
         return err;
     }
 
+    /* 母线电压 LSB=4 mV；电流和功率系数由校准寄存器决定。 */
     measurement->bus_voltage_v = ((bus_raw >> 3) * 0.004f);
     measurement->current_a = (int16_t)current_raw * INA219_CURRENT_LSB_A;
     measurement->power_w = power_raw * INA219_POWER_LSB_W;
