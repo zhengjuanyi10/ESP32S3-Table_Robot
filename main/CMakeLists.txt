@@ -1,7 +1,7 @@
 idf_component_register(
-    SRCS "main.c" "servo/robot_motion.c" "actions/robot_actions.c"
-         "display/ili9488_display.c"
+    SRCS "main.c"
+         "display/display_app.c"
+         "display/display_ili9488.c"
     INCLUDE_DIRS "."
-    PRIV_REQUIRES esp_driver_gpio esp_driver_uart esp_driver_spi esp_lcd
-                  atanisoft__esp_lcd_ili9488
+    PRIV_REQUIRES esp_driver_gpio esp_driver_ledc hal esp_rom
 )

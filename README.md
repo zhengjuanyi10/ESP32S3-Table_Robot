@@ -32,15 +32,15 @@ idf.py -p COMx flash monitor
 .
 ├── CMakeLists.txt
 ├── sdkconfig.defaults       # 默认项目配置
-├── dependencies.lock       # 组件依赖版本
+├── examples/
+│   └── display_ili9488/    # ILI9488 独立显示示例
 └── main/
     ├── CMakeLists.txt
     ├── Kconfig.projbuild
-    ├── idf_component.yml
     ├── main.c               # 应用入口
     ├── actions/             # 动作模块（预留）
     ├── button/              # 按键模块（预留）
-    ├── display/             # 显示模块（预留）
+    ├── display/             # ILI9488 驱动与显示应用
     ├── sensors/             # 传感器模块
     └── servo/               # 舵机模块（预留）
 ```
@@ -54,9 +54,11 @@ idf.py -p COMx flash monitor
 | 实时时钟 | `main/sensors/ds3231.*` | 日期与时间读取 | 已提交 |
 | 电源监测 | `main/sensors/ina219.*` | 电压、电流和功率数据读取 | 已提交 |
 | 温湿度监测 | `main/sensors/sht30.*` | 温度与湿度数据读取 | 已提交 |
+| 距离监测 | `main/sensors/tof200.*` | UART 测距数据读取 | 已提交 |
 | 动作控制 | `main/actions/` | 组合动作与动作编排 | 预留 |
 | 按键输入 | `main/button/` | 按键检测与输入事件处理 | 预留 |
-| 显示输出 | `main/display/` | 屏幕初始化与界面显示 | 预留 |
+| 显示输出 | `main/display/` | ILI9488 驱动、基础绘图、背光和页面布局 | 已提交 |
+| 显示示例 | `examples/display_ili9488/` | 独立显示与背光测试 | 已提交 |
 | 舵机控制 | `main/servo/` | 舵机通信与运动控制 | 预留 |
 | 项目配置 | `sdkconfig.defaults`、`main/Kconfig.projbuild` | 默认参数与可配置选项 | 已提交 |
 
@@ -65,8 +67,8 @@ idf.py -p COMx flash monitor
 - `main` 分支保存稳定代码。
 - 新功能在独立分支开发，并通过 Pull Request 合并。
 - 不提交 `build/`、`sdkconfig`、`.vscode/` 等本地生成或个人配置文件。
-- `actions`、`button`、`display` 和 `servo` 目录当前仅保留目录结构，代码将在相应模块整理完成后提交。
+- `actions`、`button` 和 `servo` 目录当前仅保留目录结构，代码将在相应模块整理完成后提交。
 
 ## 当前状态
 
-仓库目前包含基础工程配置和传感器模块。部分预留模块尚未提交，实现补充完成前可能需要同步调整 `main/CMakeLists.txt` 才能完整编译。
+仓库目前包含基础工程配置、传感器模块和 ILI9488 显示模块。动作、按键和舵机模块仍为预留目录。

@@ -27,7 +27,12 @@ main/servo/*
 
 main/display/*
 !main/display/.gitkeep
+!main/display/README.md
+!main/display/*.c
+!main/display/*.h
 
 # Keep the examples directory without uploading local examples
 examples/*
 !examples/.gitkeep
+!examples/display_ili9488/
+!examples/display_ili9488/**

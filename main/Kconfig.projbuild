@@ -108,55 +108,79 @@ endif
 
 menu "ILI9488 display"
 
-config TABLE_ROBOT_DISPLAY_SPI_CLOCK_HZ
-    int "ILI9488 SPI clock (Hz)"
-    range 1000000 40000000
-    default 20000000
+config TABLE_ROBOT_DISPLAY_GPIO_DELAY_US
+    int "ILI9488 GPIO clock half-cycle delay (us)"
+    range 0 5
+    default 0
     help
-        Start at 20 MHz for jumper-wire stability. This can be increased after
-        the final PCB or short wiring is verified.
+        Extra delay between GPIO clock edges. Use 0 for the fastest UI draw.
+        Set this to 1 only when long or noisy jumper wires require the slower
+        waveform that was used during initial panel bring-up.
 
 config TABLE_ROBOT_DISPLAY_SCLK_GPIO
     int "ILI9488 SCLK GPIO"
     range 0 48
-    default 39
+    default 4
 
 config TABLE_ROBOT_DISPLAY_MOSI_GPIO
     int "ILI9488 MOSI GPIO"
     range 0 48
-    default 40
+    default 5
 
 config TABLE_ROBOT_DISPLAY_CS_GPIO
     int "ILI9488 CS GPIO"
     range 0 48
-    default 42
+    default 6
 
 config TABLE_ROBOT_DISPLAY_DC_GPIO
     int "ILI9488 DC GPIO"
     range 0 48
-    default 47
+    default 7
+    help
+        GPIO47 is a 1.8 V pin on ESP32-S3R16V and cannot directly drive the
+        3.3 V LCD logic. GPIO7 is a normal 3.3 V GPIO released by replacing
+        the parallel OV5640 camera with an I2C-only vision module.
 
 config TABLE_ROBOT_DISPLAY_RESET_GPIO
     int "ILI9488 RESET GPIO"
     range 0 48
-    default 41
+    default 10
     help
-        Temporary wiring uses GPIO41. Change this to GPIO48 when restoring the
-        final wiring table; display API calls do not need to change.
+        GPIO48 is a 1.8 V pin on ESP32-S3R16V and cannot reliably release the
+        3.3 V LCD from reset. Connect the LCD reset signal to GPIO10.
 
 config TABLE_ROBOT_DISPLAY_BACKLIGHT_GPIO
     int "ILI9488 backlight GPIO"
-    range 0 48
-    default 38
+    range -1 48
+    default 11
+    help
+        GPIO11 controls an external transistor/MOSFET backlight driver. Do not
+        use the GPIO to source the LCD backlight current directly. GPIO38
+        drives the onboard RGB LED on DevKitC-1 v1.1 and is not used.
+
+config TABLE_ROBOT_DISPLAY_BRIGHTNESS_PERCENT
+    int "ILI9488 default backlight brightness (%)"
+    range 1 100
+    default 40
+    help
+        PWM brightness used when the backlight is enabled. The backlight GPIO
+        must control an external transistor or MOSFET, not the LED directly.
 
 config TABLE_ROBOT_TOUCH_RESET_GPIO
     int "Capacitive-touch RESET GPIO"
-    range 0 48
-    default 2
+    range -1 48
+    default 12
     help
-        Temporary wiring uses GPIO2. Change this to GPIO21 when restoring the
-        final wiring table. The touch protocol is added separately after its
-        controller model is confirmed.
+        GPIO12 was released by removing the parallel-camera interface. The
+        LCD-only test does not configure or drive touch RESET.
+
+config TABLE_ROBOT_TOUCH_INT_GPIO
+    int "Capacitive-touch INT GPIO"
+    range -1 48
+    default 13
+    help
+        GPIO13 was released by removing the parallel-camera interface. This
+        pin is not used by the LCD-only test.
 
 endmenu
 
