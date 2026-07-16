@@ -1,4 +1,7 @@
-/* SHT30 温湿度传感器驱动。 */
+/*
+ * 功能：触发 SHT30 单次高精度测量，并校验、换算温度和相对湿度。
+ * 配置：共享 I2C0，100 kHz，默认地址 0x44，测量等待时间 15 ms。
+ */
 
 #include <stdint.h>
 
@@ -40,7 +43,10 @@ esp_err_t sht30_init(void)
         .scl_speed_hz = 100000,
     };
     esp_err_t err = i2c_bus_init();
-    return err == ESP_OK ? i2c_master_bus_add_device(i2c_bus_get_handle(), &config, &s_sht30) : err;
+    return err == ESP_OK
+               ? i2c_master_bus_add_device(i2c_bus_get_handle(), &config,
+                                           &s_sht30)
+               : err;
 }
 
 esp_err_t sht30_get_measurement(sht30_measurement_t *measurement)
@@ -69,6 +75,7 @@ esp_err_t sht30_get_measurement(sht30_measurement_t *measurement)
 
     const uint16_t raw_temperature = ((uint16_t)data[0] << 8) | data[1];
     const uint16_t raw_humidity = ((uint16_t)data[3] << 8) | data[4];
+    /* 使用 SHT30 数据手册给出的 16 位原始值线性换算公式。 */
     measurement->temperature_c = -45.0f + 175.0f * raw_temperature / 65535.0f;
     measurement->humidity_percent = 100.0f * raw_humidity / 65535.0f;
     return ESP_OK;
