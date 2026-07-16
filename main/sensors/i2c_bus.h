@@ -1,3 +1,5 @@
+/* 传感器共用 I2C 总线接口。 */
+
 #pragma once
 
 #include "driver/i2c_master.h"
