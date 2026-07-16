@@ -45,6 +45,21 @@ idf.py -p COMx flash monitor
     └── servo/               # 舵机模块（预留）
 ```
 
+## 模块清单
+
+| 模块 | 路径 | 功能 | 当前状态 |
+| --- | --- | --- | --- |
+| 应用入口 | `main/main.c` | 系统初始化与模块调度 | 已提交 |
+| I2C 总线 | `main/sensors/i2c_bus.*` | 初始化并管理传感器共用的 I2C 总线 | 已提交 |
+| 实时时钟 | `main/sensors/ds3231.*` | 日期与时间读取 | 已提交 |
+| 电源监测 | `main/sensors/ina219.*` | 电压、电流和功率数据读取 | 已提交 |
+| 温湿度监测 | `main/sensors/sht30.*` | 温度与湿度数据读取 | 已提交 |
+| 动作控制 | `main/actions/` | 组合动作与动作编排 | 预留 |
+| 按键输入 | `main/button/` | 按键检测与输入事件处理 | 预留 |
+| 显示输出 | `main/display/` | 屏幕初始化与界面显示 | 预留 |
+| 舵机控制 | `main/servo/` | 舵机通信与运动控制 | 预留 |
+| 项目配置 | `sdkconfig.defaults`、`main/Kconfig.projbuild` | 默认参数与可配置选项 | 已提交 |
+
 ## 协作约定
 
 - `main` 分支保存稳定代码。
