@@ -1,3 +1,5 @@
+/* SHT30 温湿度传感器驱动。 */
+
 #include <stdint.h>
 
 #include "driver/i2c_master.h"

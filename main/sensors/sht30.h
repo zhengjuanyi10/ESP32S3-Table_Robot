@@ -1,3 +1,5 @@
+/* SHT30 温湿度传感器驱动接口。 */
+
 #pragma once
 
 #include "esp_err.h"
