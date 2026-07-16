@@ -1,3 +1,5 @@
+/* INA219 电源监测驱动接口。 */
+
 #pragma once
 
 #include "esp_err.h"

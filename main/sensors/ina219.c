@@ -1,3 +1,5 @@
+/* INA219 电压、电流和功率监测驱动。 */
+
 #include <stdint.h>
 
 #include "driver/i2c_master.h"
