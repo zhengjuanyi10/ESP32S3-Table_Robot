@@ -1,4 +1,7 @@
-/* DS3231 实时时钟驱动。 */
+/*
+ * 功能：读取/设置 DS3231 日期时间，并支持用固件编译时间校时。
+ * 配置：共享 I2C0，总线速率 100 kHz，7 位地址 0x68，使用 24 小时制。
+ */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -37,7 +40,10 @@ esp_err_t ds3231_init(void)
         .scl_speed_hz = 100000,
     };
     esp_err_t err = i2c_bus_init();
-    return err == ESP_OK ? i2c_master_bus_add_device(i2c_bus_get_handle(), &config, &s_ds3231) : err;
+    return err == ESP_OK
+               ? i2c_master_bus_add_device(i2c_bus_get_handle(), &config,
+                                           &s_ds3231)
+               : err;
 }
 
 esp_err_t ds3231_get_time(ds3231_time_t *time)
@@ -49,7 +55,8 @@ esp_err_t ds3231_get_time(ds3231_time_t *time)
 
     const uint8_t first_register = 0x00;
     uint8_t data[7] = {0};
-    esp_err_t err = i2c_master_transmit_receive(s_ds3231, &first_register, 1, data, sizeof(data), 100);
+    esp_err_t err = i2c_master_transmit_receive(
+        s_ds3231, &first_register, 1, data, sizeof(data), 100);
     if (err != ESP_OK) {
         return err;
     }
@@ -72,6 +79,7 @@ esp_err_t ds3231_get_time(ds3231_time_t *time)
 
 esp_err_t ds3231_set_time(const ds3231_time_t *time)
 {
+    /* 先限制到芯片寄存器可表达的范围，再执行 BCD 编码。 */
     if (time == NULL || s_ds3231 == NULL ||
         time->year < 2000 || time->year > 2099 ||
         time->month < 1 || time->month > 12 ||
@@ -88,7 +96,7 @@ esp_err_t ds3231_set_time(const ds3231_time_t *time)
         decimal_to_bcd(time->second),
         decimal_to_bcd(time->minute),
         decimal_to_bcd(time->hour),
-        1, /* 星期字段当前未使用，固定写星期一。 */
+        1, /* 时间结构不保存星期字段，因此固定写入 1。 */
         decimal_to_bcd(time->day),
         decimal_to_bcd(time->month),
         decimal_to_bcd(time->year - 2000),
@@ -111,6 +119,7 @@ esp_err_t ds3231_set_to_build_time(void)
         return ESP_FAIL;
     }
     for (int index = 0; index < 12; ++index) {
+        /* 将编译器英文月份缩写转换成 DS3231 的 1~12 月。 */
         if (strcmp(month_name, months[index]) == 0) {
             time.month = index + 1;
             return ds3231_set_time(&time);
