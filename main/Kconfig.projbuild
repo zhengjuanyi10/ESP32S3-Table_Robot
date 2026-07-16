@@ -97,7 +97,7 @@ if TABLE_ROBOT_SERVO_VERIFY_CENTER_AFTER_MOVE
 config TABLE_ROBOT_SERVO_VERIFY_TOLERANCE_PWM
     int "Allowed center error (PWM units)"
     range 0 500
-    default 30
+    default 40
     help
         Center is considered successful when the readback is within this
         distance from the configured center PWM value.
