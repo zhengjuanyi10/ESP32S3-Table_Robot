@@ -25,7 +25,9 @@
 #include "freertos/task.h"
 
 #include "sensors/i2c_bus.h"
+#if !CONFIG_TABLE_ROBOT_TOUCH_BYPASS_TCA
 #include "sensors/i2c_mux.h"
+#endif
 
 static const char *TAG = "touch_chip";
 
