@@ -166,21 +166,127 @@ config TABLE_ROBOT_DISPLAY_BRIGHTNESS_PERCENT
         PWM brightness used when the backlight is enabled. The backlight GPIO
         must control an external transistor or MOSFET, not the LED directly.
 
+endmenu
+
+menu "Capacitive touch"
+
+config TABLE_ROBOT_TOUCH_ENABLE
+    bool "Enable capacitive touch driver"
+    default y
+    help
+        Enable the capacitive touch driver behind the TCA9548A I2C mux.
+        When enabled, the touch panel is auto-detected at startup and
+        polled periodically. Disable when no touch panel is connected
+        to avoid I2C bus errors.
+
+if TABLE_ROBOT_TOUCH_ENABLE
+
+config TABLE_ROBOT_TOUCH_BYPASS_TCA
+    bool "Bypass TCA9548A (touch directly on I2C bus)"
+    default n
+    help
+        When enabled, the touch controller is probed directly on the I2C
+        bus without going through the TCA9548A mux. Use this when the TCA
+        chip is not installed or not responding, and the touch panel's
+        SDA/SCL are connected directly to GPIO8/GPIO9.
+
+config TABLE_ROBOT_TOUCH_TCA_CHANNEL
+    int "Touch TCA9548A channel (0-7)"
+    range 0 7
+    default 1
+    help
+        The TCA9548A multiplexer channel that the capacitive touch
+        controller is connected to. Channel 1 on this robot.
+
+config TABLE_ROBOT_TOUCH_TCA_ADDR
+    hex "TCA9548A I2C address"
+    range 0x70 0x77
+    default 0x70
+    help
+        The 7-bit I2C address of the TCA9548A mux. 0x70 is the default
+        when A0/A1/A2 are grounded.
+
 config TABLE_ROBOT_TOUCH_RESET_GPIO
-    int "Capacitive-touch RESET GPIO"
+    int "Touch RESET GPIO"
     range -1 48
     default 12
     help
-        GPIO12 was released by removing the parallel-camera interface. The
-        LCD-only test does not configure or drive touch RESET.
+        GPIO connected to the capacitive touch RST pin. The driver
+        pulses this pin low then high during initialization. Set to
+        -1 to skip hardware reset.
 
 config TABLE_ROBOT_TOUCH_INT_GPIO
-    int "Capacitive-touch INT GPIO"
+    int "Touch INT GPIO"
     range -1 48
     default 13
     help
-        GPIO13 was released by removing the parallel-camera interface. This
-        pin is not used by the LCD-only test.
+        GPIO connected to the capacitive touch INT pin. Currently
+        polled as a digital input; interrupt-driven wake is not
+        implemented.
+
+config TABLE_ROBOT_TOUCH_I2C_FREQ_HZ
+    int "Touch I2C bus frequency (Hz)"
+    range 50000 400000
+    default 100000
+    help
+        I2C clock frequency for the touch controller behind the TCA
+        mux. 100 kHz is reliable for most capacitive touch chips.
+
+config TABLE_ROBOT_TOUCH_FT6X36_ADDR
+    hex "FT6x36 I2C address"
+    default 0x38
+    help
+        Typical address for FT6236/FT6336 touch controllers.
+
+config TABLE_ROBOT_TOUCH_GT911_ADDR_PRIMARY
+    hex "GT911 primary I2C address"
+    default 0x5D
+    help
+        GT911 address when the INT pin is configured for 0x5D/0x14
+        address selection.
+
+config TABLE_ROBOT_TOUCH_GT911_ADDR_SECONDARY
+    hex "GT911 secondary I2C address"
+    default 0x14
+    help
+        GT911 alternate address.
+
+config TABLE_ROBOT_TOUCH_CST816_ADDR
+    hex "CST816 I2C address"
+    default 0x15
+    help
+        Typical address for CST816-series touch controllers.
+
+config TABLE_ROBOT_TOUCH_SWAP_XY
+    bool "Swap touch X and Y coordinates"
+    default n
+    help
+        Swap the raw X and Y axes before applying inversion. Enable when
+        the touch panel reports in landscape (480x320) but the display is
+        portrait (320x480). This panel reports in portrait natively.
+
+config TABLE_ROBOT_TOUCH_INVERT_X
+    bool "Invert touch X axis"
+    default n
+    help
+        Mirror the X coordinate (subtract from screen width - 1).
+
+config TABLE_ROBOT_TOUCH_INVERT_Y
+    bool "Invert touch Y axis"
+    default n
+    help
+        Mirror the Y coordinate (subtract from screen height - 1).
+
+config TABLE_ROBOT_TOUCH_POLL_PERIOD_MS
+    int "Touch poll period (ms)"
+    range 10 500
+    default 50
+    help
+        Interval between touch sample reads in the main application
+        loop. 50 ms provides 20 Hz update rate with moderate CPU
+        overhead.
+
+endif  # TABLE_ROBOT_TOUCH_ENABLE
 
 endmenu
 

@@ -14,6 +14,8 @@
 #include "esp_log.h"
 
 #define HOME_LINE_THICKNESS 3
+#define HOME_GAP_CROSS 16   /* 中心十字触摸死区宽度 */
+#define HOME_CELL_INSET 12  /* 格子内部边距，触摸命中区比视觉边界内缩 */
 #define HOME_COLOR_BLUE ILI9488_RGB565(45, 120, 195)
 
 typedef struct {
@@ -79,12 +81,14 @@ static bool grid_cell_rect(unsigned box_count, unsigned index,
                       HOME_LINE_THICKNESS;
     const int bottom = s_content_rect.y + s_content_rect.height -
                        HOME_LINE_THICKNESS;
+    /* 中心十字由隔离区宽度定义，格子不包含隔离区，触摸在此区域内无效。 */
+    const int gap_half = HOME_GAP_CROSS / 2;
     const int split_x = s_content_rect.x + s_content_rect.width / 2;
     const int split_y = s_content_rect.y + s_content_rect.height / 2;
-    const int split_left = split_x - HOME_LINE_THICKNESS / 2;
-    const int split_right = split_left + HOME_LINE_THICKNESS;
-    const int split_top = split_y - HOME_LINE_THICKNESS / 2;
-    const int split_bottom = split_top + HOME_LINE_THICKNESS;
+    const int split_left = split_x - gap_half;
+    const int split_right = split_left + HOME_GAP_CROSS;
+    const int split_top = split_y - gap_half;
+    const int split_bottom = split_top + HOME_GAP_CROSS;
 
     /* 2 格上下排列；3 格为上 1 下 2；4 格为标准四象限。 */
     if (box_count == 2) {
@@ -122,28 +126,42 @@ static esp_err_t render_box_grid(unsigned box_count,
         return ESP_ERR_INVALID_ARG;
     }
 
-    const int split_x = s_content_rect.x + s_content_rect.width / 2 -
-                        HOME_LINE_THICKNESS / 2;
-    const int split_y = s_content_rect.y + s_content_rect.height / 2 -
-                        HOME_LINE_THICKNESS / 2;
+    /* 中心十字：白色 16px 隔离区上覆 3px 蓝色细线。 */
+    const int cross_left = s_content_rect.x + s_content_rect.width / 2 -
+                           HOME_GAP_CROSS / 2;
+    const int cross_top  = s_content_rect.y + s_content_rect.height / 2 -
+                           HOME_GAP_CROSS / 2;
+    const int line_x = s_content_rect.x + s_content_rect.width / 2 -
+                       HOME_LINE_THICKNESS / 2;
+    const int line_y = s_content_rect.y + s_content_rect.height / 2 -
+                       HOME_LINE_THICKNESS / 2;
 
-    /* 每种布局只画一个外框和共享线，不重复描绘相邻格子的边。 */
     esp_err_t err = draw_thick_frame(&s_content_rect, HOME_LINE_THICKNESS,
                                      HOME_COLOR_BLUE);
+    /* 白色隔离区 — 覆盖掉格子之间区域 */
     if (err == ESP_OK) {
         err = ili9488_display_fill_rect(
-            s_content_rect.x, split_y, s_content_rect.width,
-            HOME_LINE_THICKNESS, HOME_COLOR_BLUE);
+            cross_left, s_content_rect.y + HOME_LINE_THICKNESS,
+            HOME_GAP_CROSS,
+            s_content_rect.height - 2 * HOME_LINE_THICKNESS,
+            ILI9488_COLOR_WHITE);
     }
-    if (err == ESP_OK && box_count == 3) {
+    if (err == ESP_OK) {
         err = ili9488_display_fill_rect(
-            split_x, split_y, HOME_LINE_THICKNESS,
-            s_content_rect.y + s_content_rect.height - split_y,
-            HOME_COLOR_BLUE);
-    } else if (err == ESP_OK && box_count == 4) {
+            s_content_rect.x + HOME_LINE_THICKNESS, cross_top,
+            s_content_rect.width - 2 * HOME_LINE_THICKNESS,
+            HOME_GAP_CROSS, ILI9488_COLOR_WHITE);
+    }
+    /* 3px 蓝色细线在隔离区正中央 */
+    if (err == ESP_OK) {
         err = ili9488_display_fill_rect(
-            split_x, s_content_rect.y, HOME_LINE_THICKNESS,
+            line_x, s_content_rect.y, HOME_LINE_THICKNESS,
             s_content_rect.height, HOME_COLOR_BLUE);
+    }
+    if (err == ESP_OK && box_count >= 3) {
+        err = ili9488_display_fill_rect(
+            s_content_rect.x, line_y, s_content_rect.width, HOME_LINE_THICKNESS,
+            HOME_COLOR_BLUE);
     }
 
     for (unsigned index = 0; index < box_count && err == ESP_OK; ++index) {
@@ -334,13 +352,22 @@ esp_err_t display_app_update_status(const char *time_text,
 
 int display_app_hit_test_touch_grid(int x, int y)
 {
-    /* cell 矩形已排除 3 px 外框和分割线，线上的触摸返回 0。 */
+    /*
+     * 网格格子已排除了中心十字隔离区和外框线；额外内缩 HOME_CELL_INSET
+     * 进一步缩小有效触摸区域，防止手指靠近分隔线时误触相邻格子。
+     */
     for (unsigned index = 0; index < 4; ++index) {
         display_app_rect_t cell;
-        if (grid_cell_rect(4, index, &cell) &&
-            x >= cell.x && x < cell.x + cell.width &&
-            y >= cell.y && y < cell.y + cell.height) {
-            return (int)index + 1;
+        if (grid_cell_rect(4, index, &cell)) {
+            const int inset_x = cell.x + HOME_CELL_INSET;
+            const int inset_y = cell.y + HOME_CELL_INSET;
+            const int inset_w = cell.width - 2 * HOME_CELL_INSET;
+            const int inset_h = cell.height - 2 * HOME_CELL_INSET;
+            if (inset_w > 0 && inset_h > 0 &&
+                x >= inset_x && x < inset_x + inset_w &&
+                y >= inset_y && y < inset_y + inset_h) {
+                return (int)index + 1;
+            }
         }
     }
     return 0;

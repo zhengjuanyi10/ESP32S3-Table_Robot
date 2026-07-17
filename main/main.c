@@ -1,5 +1,6 @@
 /*
- * 功能：启动 display_app，并通过串口输入 0~100 调节背光百分比。
+ * 功能：启动 display_app，通过串口输入 0~100 调节背光百分比，
+ *       同时以独立任务轮询电容触摸屏。
  * 配置：使用 ESP-IDF 控制台 UART0，当前 sdkconfig 波特率为 115200。
  * 输入：发送一个十进制整数并回车，例如 35 表示背光亮度 35%。
  */
@@ -16,6 +17,10 @@
 
 #include "display/display_app.h"
 #include "display/display_ili9488.h"
+
+#if CONFIG_TABLE_ROBOT_TOUCH_ENABLE
+#include "control/touch/touch_chip.h"
+#endif
 
 static const char *TAG = "table_robot";
 
@@ -39,6 +44,38 @@ static bool parse_brightness(const char *line, uint8_t *brightness)
     return true;
 }
 
+#if CONFIG_TABLE_ROBOT_TOUCH_ENABLE
+static void touch_poll_task(void *pvParameters)
+{
+    touch_sample_t sample;
+    bool was_pressed = false;
+    TickType_t last_wake = xTaskGetTickCount();
+    const TickType_t period =
+        pdMS_TO_TICKS(CONFIG_TABLE_ROBOT_TOUCH_POLL_PERIOD_MS);
+
+    while (true) {
+        vTaskDelayUntil(&last_wake, period);
+        esp_err_t err = touch_chip_read_sample(&sample);
+        if (err != ESP_OK || !sample.online) {
+            was_pressed = false;
+            continue;
+        }
+
+        if (sample.pressed) {
+            if (!was_pressed) {
+                /* 新按下——只触发一次导航，避免按住时反复跳转。 */
+                was_pressed = true;
+                ESP_LOGI(TAG, "Touch at (%u, %u)  ctrl=%d",
+                         sample.raw_x, sample.raw_y, (int)sample.controller);
+                display_app_handle_touch((int)sample.raw_x, (int)sample.raw_y);
+            }
+        } else {
+            was_pressed = false;
+        }
+    }
+}
+#endif
+
 void app_main(void)
 {
     esp_err_t err = display_app_init();
@@ -47,6 +84,11 @@ void app_main(void)
                  esp_err_to_name(err));
         return;
     }
+
+#if CONFIG_TABLE_ROBOT_TOUCH_ENABLE
+    touch_chip_boot_probe();
+    xTaskCreate(touch_poll_task, "touch_poll", 4096, NULL, 5, NULL);
+#endif
 
     ESP_LOGI(TAG, "display_app running");
     ESP_LOGI(TAG, "UART brightness control ready (0-100)");

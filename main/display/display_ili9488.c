@@ -359,12 +359,27 @@ static esp_err_t fill_rect_unlocked(int x, int y, int width, int height,
     uint8_t blue;
     rgb565_to_rgb666(color, &red, &green, &blue);
     set_window(x, y, width, height);
-    for (int row = 0; row < height; ++row) {
-        for (int column = 0; column < width; ++column) {
-            write_pixel(red, green, blue);
+
+    /*
+     * After set_window sends 0x2C (memory-write), the panel expects a
+     * continuous pixel stream.  Keep CS and DC LOW/HIGH for the entire
+     * burst instead of toggling them per pixel — this eliminates
+     * 2*(W*H) GPIO writes and makes fills near-instant.
+     */
+    const int total = width * height;
+    pin_write(CONFIG_TABLE_ROBOT_DISPLAY_CS_GPIO, 0);
+    pin_write(CONFIG_TABLE_ROBOT_DISPLAY_DC_GPIO, 1);
+
+    for (int i = 0; i < total; ++i) {
+        clock_byte(red);
+        clock_byte(green);
+        clock_byte(blue);
+        if ((i & 0x7FF) == 0x7FF) {   /* yield every 2048 pixels */
+            vTaskDelay(1);
         }
-        service_idle_task(row);
     }
+
+    pin_write(CONFIG_TABLE_ROBOT_DISPLAY_CS_GPIO, 1);
     return ESP_OK;
 }
 
